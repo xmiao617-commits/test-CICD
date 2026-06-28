@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 自动化学习日志</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 30px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid #2a2a4a;
+        }
+        .header h1 { font-size: 2.8em; background: linear-gradient(135deg, #00d2ff, #7b2ffc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: #888; margin-top: 10px; }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: #1a1a2e;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #2a2a4a;
+        }
+        .stat-card .number { font-size: 2.2em; font-weight: bold; color: #00d2ff; }
+        .stat-card .label { color: #888; font-size: 0.9em; margin-top: 5px; }
+
+        .form-section {
+            background: #1a1a2e;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid #2a2a4a;
+        }
+        .form-section h2 { margin-bottom: 15px; color: #7b2ffc; }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .form-group input, .form-group select {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #2a2a4a;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            font-size: 1em;
+        }
+        .form-group button {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #00d2ff, #7b2ffc);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+        .form-group button:hover { transform: scale(1.05); }
+
+        .records {
+            margin: 20px 0;
+        }
+        .record-item {
+            background: #1a1a2e;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #7b2ffc;
+        }
+        .record-item .tag {
+            background: #2a2a4a;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            color: #00d2ff;
+        }
+        .record-item .time { color: #888; font-size: 0.9em; }
+
+        .empty { text-align: center; color: #555; padding: 40px; }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #555;
+            font-size: 0.9em;
+            border-top: 1px solid #2a2a4a;
+            margin-top: 30px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #4ade80;
+            color: #0f0f1a;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 自动化学习日志</h1>
+            <p>记录每天的学习轨迹 · 自动生成报告</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="number" id="totalDays">0</div>
+                <div class="label">📅 学习天数</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalHours">0</div>
+                <div class="label">⏱ 总学习时长</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalTopics">0</div>
+                <div class="label">📖 学习主题数</div>
+            </div>
+        </div>
+
+        <!-- 添加记录 -->
+        <div class="form-section">
+            <h2>✏️ 添加学习记录</h2>
+            <div class="form-group">
+                <input type="text" id="topicInput" placeholder="学习主题（如：Git 基础）">
+                <input type="number" id="hoursInput" placeholder="学习时长（小时）" min="0.5" step="0.5">
+                <select id="categoryInput">
+                    <option value="编程">💻 编程</option>
+                    <option value="英语">🌍 英语</option>
+                    <option value="阅读">📚 阅读</option>
+                    <option value="写作">✍️ 写作</option>
+                    <option value="其他">🎯 其他</option>
+                </select>
+                <button onclick="addRecord()">➕ 添加</button>
+            </div>
+        </div>
+
+        <!-- 学习记录列表 -->
+        <div class="records" id="recordsList">
+            <div class="empty">还没有学习记录，添加一条吧！ 🚀</div>
+        </div>
+
+        <div class="footer">
+            🤖 每次 <code>git push</code> 自动部署 · CI/CD 流水线已就绪
+        </div>
+    </div>
+
+    <script>
+        // 数据存储
+        let records = [];
+
+        // 加载本地存储的数据
+        function loadRecords() {
+            const saved = localStorage.getItem('learningRecords');
+            if (saved) {
+                records = JSON.parse(saved);
+            } else {
+                // 示例数据
+                records = [
+                    { id: 1, topic: 'Git 基础', hours: 1.5, category: '编程', date: '2026-06-27' },
+                    { id: 2, topic: 'GitHub Actions', hours: 2, category: '编程', date: '2026-06-28' },
+                ];
+            }
+            renderAll();
+        }
+
+        // 保存到本地存储
+        function saveRecords() {
+            localStorage.setItem('learningRecords', JSON.stringify(records));
+        }
+
+        // 添加记录
+        function addRecord() {
+            const topic = document.getElementById('topicInput').value.trim();
+            const hours = parseFloat(document.getElementById('hoursInput').value);
+            const category = document.getElementById('categoryInput').value;
+
+            if (!topic) { alert('请输入学习主题！'); return; }
+            if (!hours || hours <= 0) { alert('请输入有效的学习时长！'); return; }
+
+            const newRecord = {
+                id: Date.now(),
+                topic: topic,
+                hours: hours,
+                category: category,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            records.unshift(newRecord);
+            saveRecords();
+            renderAll();
+
+            // 清空输入
+            document.getElementById('topicInput').value = '';
+            document.getElementById('hoursInput').value = '';
+        }
+
+        // 删除记录
+        function deleteRecord(id) {
+            if (confirm('确定要删除这条记录吗？')) {
+                records = records.filter(r => r.id !== id);
+                saveRecords();
+                renderAll();
+            }
+        }
+
+        // 渲染所有内容
+        function renderAll() {
+            renderStats();
+            renderRecords();
+        }
+
+        // 渲染统计
+        function renderStats() {
+            const days = new Set(records.map(r => r.date)).size;
+            const hours = records.reduce((sum, r) => sum + r.hours, 0);
+            const topics = new Set(records.map(r => r.topic)).size;
+
+            document.getElementById('totalDays').textContent = days;
+            document.getElementById('totalHours').textContent = hours.toFixed(1);
+            document.getElementById('totalTopics').textContent = topics;
+        }
+
+        // 渲染记录列表
+        function renderRecords() {
+            const container = document.getElementById('recordsList');
+
+            if (records.length === 0) {
+                container.innerHTML = '<div class="empty">还没有学习记录，添加一条吧！ 🚀</div>';
+                return;
+            }
+
+            const categoryEmoji = {
+                '编程': '💻',
+                '英语': '🌍',
+                '阅读': '📚',
+                '写作': '✍️',
+                '其他': '🎯'
+            };
+
+            let html = '';
+            records.forEach(r => {
+                html += `
+                    <div class="record-item">
+                        <div>
+                            <strong>${r.topic}</strong>
+                            <span class="tag">${categoryEmoji[r.category] || '🎯'} ${r.category}</span>
+                        </div>
+                        <div>
+                            <span class="time">⏱ ${r.hours}h · ${r.date}</span>
+                            <button onclick="deleteRecord(${r.id})" style="margin-left:15px;background:none;border:none;color:#ff6b6b;cursor:pointer;">✕</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 初始化
+        loadRecords();
+    </script>
+</body>
+</html>
